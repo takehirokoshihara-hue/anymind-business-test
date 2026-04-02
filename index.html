@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnyMind ビジネス・プロダクト理解度テスト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .correct {
+            background-color: #10b981;
+            color: white;
+        }
+        .incorrect {
+            background-color: #ef4444;
+            color: white;
+        }
+        .option-button {
+            transition: all 0.3s ease;
+        }
+        .option-button:hover:not(:disabled) {
+            transform: translateX(4px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 開始画面 -->
+        <div id="start-screen" class="fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl md:text-5xl font-bold text-indigo-900 mb-4">
+                        AnyMind<br>ビジネス・プロダクト理解度テスト
+                    </h1>
+                    <div class="w-24 h-1 bg-indigo-500 mx-auto mb-6"></div>
+                </div>
+
+                <div class="mb-8 text-gray-700 space-y-4">
+                    <p class="text-lg">
+                        このテストは、AnyMindの<strong>ビジネスモデル</strong>と<strong>業界用語</strong>に対する理解度を確認するためのツールです。
+                    </p>
+
+                    <div class="bg-indigo-50 p-6 rounded-lg">
+                        <h2 class="font-bold text-xl mb-3 text-indigo-900">📚 テスト内容</h2>
+                        <ul class="space-y-2 text-sm md:text-base">
+                            <li>✓ 経営・財務の基本用語</li>
+                            <li>✓ ビジネス戦略・成長モデル</li>
+                            <li>✓ SaaS・顧客継続指標</li>
+                            <li>✓ 広告・マーケティング・SNS</li>
+                            <li>✓ EC・製造・物流</li>
+                            <li>✓ 組織・基盤</li>
+                            <li>✓ プロダクト名</li>
+                            <li>✓ ビジネスモデル</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-50 p-6 rounded-lg border-l-4 border-yellow-400">
+                        <h2 class="font-bold text-xl mb-3 text-yellow-900">ℹ️ テストの進め方</h2>
+                        <ul class="space-y-2 text-sm md:text-base">
+                            <li>• 全<span id="total-questions" class="font-bold">30</span>問からランダムに出題されます</li>
+                            <li>• 各問題は4択形式です</li>
+                            <li>• 選択後、すぐに正誤と解説が表示されます</li>
+                            <li>• 最後にスコアと復習リストが表示されます</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button onclick="startTest()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-lg text-xl transition duration-300 transform hover:scale-105 shadow-lg">
+                    テストを始める 🚀
+                </button>
+            </div>
+        </div>
+
+        <!-- テスト画面 -->
+        <div id="test-screen" class="hidden fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-10">
+                <!-- プログレスバー -->
+                <div class="mb-8">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>問題 <span id="current-question-num">1</span> / <span id="total-question-num">30</span></span>
+                        <span id="score-display">正解数: 0</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="progress-bar" class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- カテゴリバッジ -->
+                <div class="mb-4">
+                    <span id="category-badge" class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full">
+                        カテゴリ
+                    </span>
+                </div>
+
+                <!-- 問題文 -->
+                <div class="mb-8">
+                    <h2 id="question-text" class="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed">
+                        問題文がここに表示されます
+                    </h2>
+                </div>
+
+                <!-- 選択肢 -->
+                <div id="options-container" class="space-y-4 mb-8">
+                    <!-- 選択肢がJavaScriptで生成されます -->
+                </div>
+
+                <!-- 解説エリア -->
+                <div id="explanation-area" class="hidden mb-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+                        <h3 class="font-bold text-lg mb-2 text-blue-900">💡 解説</h3>
+                        <p id="explanation-text" class="text-gray-700 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <!-- 次へボタン -->
+                <button id="next-button" onclick="nextQuestion()" class="hidden w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition duration-300 shadow-lg">
+                    次の問題へ →
+                </button>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="result-screen" class="hidden fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-bold text-indigo-900 mb-4">テスト完了！</h1>
+                    <div class="w-24 h-1 bg-indigo-500 mx-auto mb-6"></div>
+                </div>
+
+                <!-- スコア表示 -->
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl p-8 mb-8 text-center">
+                    <div class="text-6xl font-bold mb-2" id="final-score">0%</div>
+                    <div class="text-xl">正答率</div>
+                    <div class="mt-4 text-lg">
+                        <span id="correct-count">0</span> / <span id="total-count">30</span> 問正解
+                    </div>
+                </div>
+
+                <!-- 評価メッセージ -->
+                <div id="evaluation-message" class="text-center mb-8 p-6 rounded-lg">
+                    <!-- JavaScriptで生成 -->
+                </div>
+
+                <!-- 間違えた問題の復習 -->
+                <div id="review-section" class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">📝 復習リスト</h2>
+                    <div id="review-list" class="space-y-4">
+                        <!-- JavaScriptで生成 -->
+                    </div>
+                </div>
+
+                <!-- リトライボタン -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="retryTest()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition duration-300 shadow-lg">
+                        もう一度挑戦する 🔄
+                    </button>
+                    <button onclick="location.reload()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition duration-300 shadow-lg">
+                        最初に戻る 🏠
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 問題データベース
+        const questionDatabase = [
+            // 1. 経営・財務の基本
+            {
+                category: "経営・財務の基本",
+                question: "Revenue（レベニュー）とは何を指しますか？",
+                options: ["売上高", "売上原価", "営業利益", "純利益"],
+                correct: 0,
+                explanation: "Revenueは売上高を指します。AnyMindのビジネスにおいて、全ての収益の起点となる重要な指標です。"
+            },
+            {
+                category: "経営・財務の基本",
+                question: "COGS（コグス）とは何を意味しますか？",
+                options: ["販売管理費", "売上原価", "営業利益", "総資産"],
+                correct: 1,
+                explanation: "COGSは「Cost of Goods Sold」の略で、売上原価を指します。商品やサービスを売るために直接かかった費用のことです。"
+            },
+            {
+                category: "経営・財務の基本",
+                question: "AnyMindが最重視している指標はどれですか？",
+                options: ["Revenue", "GP（売上総利益）", "Net Profit", "EBITDA"],
+                correct: 1,
+                explanation: "AnyMindはGP（Gross Profit：売上総利益）を最重視しています。GPはRevenue - COGSで計算され、ビジネスの本質的な収益力を示します。"
+            },
+            {
+                category: "経営・財務の基本",
+                question: "OP（営業利益）の計算式はどれですか？",
+                options: ["Revenue - COGS", "GP - SG&A", "Revenue - SG&A", "GP - COGS"],
+                correct: 1,
+                explanation: "OPはGP（売上総利益）- SG&A（販売管理費）で計算されます。本業でどれだけ儲けているかを示す重要な指標です。"
+            },
+            {
+                category: "経営・財務の基本",
+                question: "EBITDA（エビータ）が示すものは何ですか？",
+                options: ["最終的な純利益", "グローバルな稼ぐ力", "売上総利益率", "顧客獲得単価"],
+                correct: 1,
+                explanation: "EBITDAは税金や減価償却などを引く前の利益で、グローバルな稼ぐ力を示す指標です。国や会計基準が異なる場合の比較に有用です。"
+            },
+
+            // 2. ビジネス戦略・成長モデル
+            {
+                category: "ビジネス戦略・成長モデル",
+                question: "GMV（ジーエムブイ）とは何を指しますか？",
+                options: ["月間経常収益", "流通取引総額", "顧客生涯価値", "広告表示回数"],
+                correct: 1,
+                explanation: "GMVは「Gross Merchandise Value」の略で、流通取引総額を指します。プラットフォーム上で動いた取引の総額を示します。"
+            },
+            {
+                category: "ビジネス戦略・成長モデル",
+                question: "Take Rate（テイクレート）とは何ですか？",
+                options: ["解約率", "GMVのうちAnyMindの収益になる割合", "広告のクリック率", "顧客獲得単価"],
+                correct: 1,
+                explanation: "Take RateはGMVのうち、AnyMindの収益（Revenue）になる割合を指します。プラットフォームビジネスの収益性を測る重要な指標です。"
+            },
+            {
+                category: "ビジネス戦略・成長モデル",
+                question: "Organic Growthとは何を意味しますか？",
+                options: ["M&Aによる成長", "自力での成長", "広告による成長", "海外展開による成長"],
+                correct: 1,
+                explanation: "Organic Growthは自力での成長を意味します。既存事業の拡大や新規顧客獲得など、内部からの成長を指します。"
+            },
+            {
+                category: "ビジネス戦略・成長モデル",
+                question: "Vertical Integration（垂直統合）とはどのような戦略ですか？",
+                options: ["特定業界への特化", "製造から販売、物流まで一気通貫で行うこと", "複数国での展開", "企業の合併・買収"],
+                correct: 1,
+                explanation: "Vertical Integrationは製造から販売、物流まで一気通貫で行うことを指します。AnyMindがAnyFactory、AnyLogiなどを展開する戦略の根幹です。"
+            },
+            {
+                category: "ビジネス戦略・成長モデル",
+                question: "Scalability（スカラビリティ）が高いビジネスとは？",
+                options: ["人手がかかるビジネス", "仕組み化して利益率を高められるビジネス", "初期投資が大きいビジネス", "地域限定のビジネス"],
+                correct: 1,
+                explanation: "Scalabilityが高いビジネスとは、仕組み化して拡張でき、規模を大きくするほど利益率を高められるビジネスを指します。"
+            },
+
+            // 3. SaaS・顧客継続指標
+            {
+                category: "SaaS・顧客継続指標",
+                question: "ARRとは何の略ですか？",
+                options: ["Annual Revenue Rate", "Annual Recurring Revenue", "Average Revenue Rate", "Active Revenue Ratio"],
+                correct: 1,
+                explanation: "ARRは「Annual Recurring Revenue」の略で、年間経常収益を指します。サブスクリプション収益を年換算した重要なSaaS指標です。"
+            },
+            {
+                category: "SaaS・顧客継続指標",
+                question: "LTV（エルティーブイ）とは何を示す指標ですか？",
+                options: ["顧客獲得単価", "顧客生涯価値", "月間経常収益", "解約率"],
+                correct: 1,
+                explanation: "LTVは「Lifetime Value」の略で、顧客生涯価値を指します。1社の顧客が取引期間中にもたらす利益の総額を示します。"
+            },
+            {
+                category: "SaaS・顧客継続指標",
+                question: "Churn Rate（チャーンレート）とは何ですか？",
+                options: ["新規顧客率", "解約率", "成長率", "利益率"],
+                correct: 1,
+                explanation: "Churn Rateは解約率を指します。SaaSビジネスにおいて、既存顧客をどれだけ維持できているかを測る重要な指標です。"
+            },
+            {
+                category: "SaaS・顧客継続指標",
+                question: "CAC（顧客獲得単価）とLTVの理想的な関係は？",
+                options: ["CAC > LTV", "CAC = LTV", "LTV > CAC", "関係ない"],
+                correct: 2,
+                explanation: "LTV（顧客生涯価値）> CAC（顧客獲得単価）が理想です。顧客を獲得するコストよりも、その顧客から得られる利益の方が大きい状態を目指します。"
+            },
+            {
+                category: "SaaS・顧客継続指標",
+                question: "NRRとは何を示す指標ですか？",
+                options: ["新規売上率", "売上継続率", "純利益率", "顧客獲得率"],
+                correct: 1,
+                explanation: "NRRは「Net Revenue Retention」の略で、売上継続率を指します。既存顧客からの収益がどれだけ維持・拡大しているかを示します。"
+            },
+
+            // 4. 広告・マーケティング・SNS
+            {
+                category: "広告・マーケティング・SNS",
+                question: "Imp（インプレッション）とは何を指しますか？",
+                options: ["広告のクリック数", "広告の表示回数", "広告を見た人の数", "広告経由の購入数"],
+                correct: 1,
+                explanation: "Impは「Impression」の略で、広告の表示回数を指します。広告が何回表示されたかを測る基本的な指標です。"
+            },
+            {
+                category: "広告・マーケティング・SNS",
+                question: "CTRとは何の略ですか？",
+                options: ["Click Through Rate（クリック率）", "Cost Through Rate", "Customer Total Rate", "Conversion Target Rate"],
+                correct: 0,
+                explanation: "CTRは「Click Through Rate」の略で、クリック率を指します。広告が表示された回数のうち、何回クリックされたかの割合です。"
+            },
+            {
+                category: "広告・マーケティング・SNS",
+                question: "ROAS（ロアス）とは何を測る指標ですか？",
+                options: ["広告の表示回数", "広告費に対する売上の割合", "クリック単価", "顧客獲得単価"],
+                correct: 1,
+                explanation: "ROASは「Return On Ad Spend」の略で、広告費に対して得られた売上の割合（費用対効果）を示します。広告投資の効率性を測る重要な指標です。"
+            },
+            {
+                category: "広告・マーケティング・SNS",
+                question: "UGCとは何を指しますか？",
+                options: ["企業の公式広告", "ユーザーによるSNS投稿（口コミ）", "有料広告", "インフルエンサー投稿"],
+                correct: 1,
+                explanation: "UGCは「User Generated Content」の略で、ユーザーによるSNS投稿（口コミ）を指します。信頼性の高いマーケティング手法として注目されています。"
+            },
+            {
+                category: "広告・マーケティング・SNS",
+                question: "ER（エンゲージメント率）とは何を測る指標ですか？",
+                options: ["広告費用", "いいねやコメントの反応率", "表示回数", "フォロワー数"],
+                correct: 1,
+                explanation: "ERは「Engagement Rate」の略で、いいねやコメントなどのユーザーの反応率を示します。SNSマーケティングの効果測定に重要です。"
+            },
+            {
+                category: "広告・マーケティング・SNS",
+                question: "CPMとは何を指しますか？",
+                options: ["1クリックあたりのコスト", "広告1,000回表示あたりのコスト", "1獲得あたりのコスト", "月間総コスト"],
+                correct: 1,
+                explanation: "CPMは「Cost Per Mille」の略で、広告1,000回表示あたりのコストを指します。広告の露出効率を測る指標です。"
+            },
+
+            // 5. EC・製造・物流
+            {
+                category: "EC・製造・物流",
+                question: "D2Cとは何を意味しますか？",
+                options: ["代理店経由の販売", "自社で直接消費者に販売するモデル", "卸売モデル", "小売店経由の販売"],
+                correct: 1,
+                explanation: "D2Cは「Direct to Consumer」の略で、自社で直接消費者に販売するモデルを指します。中間業者を省き、顧客との直接的な関係を構築できます。"
+            },
+            {
+                category: "EC・製造・物流",
+                question: "SKUとは何を指しますか？",
+                options: ["売上高", "在庫管理の最小単位", "配送料", "顧客数"],
+                correct: 1,
+                explanation: "SKUは「Stock Keeping Unit」の略で、在庫管理の最小単位を指します。商品のサイズや色など、個別に管理される単位です。"
+            },
+            {
+                category: "EC・製造・物流",
+                question: "ASP（客単価）とは何ですか？",
+                options: ["総売上高", "平均販売単価", "総顧客数", "在庫数"],
+                correct: 1,
+                explanation: "ASPは「Average Selling Price」の略で、平均販売単価（客単価）を指します。1回の取引あたりの平均的な売上金額を示します。"
+            },
+            {
+                category: "EC・製造・物流",
+                question: "Fulfillment（フルフィルメント）とは何を指しますか？",
+                options: ["商品開発", "注文から配送までの業務", "マーケティング", "顧客サポート"],
+                correct: 1,
+                explanation: "Fulfillmentは注文から配送までの一連の業務を指します。在庫管理、ピッキング、梱包、配送などEC運営に不可欠なプロセスです。"
+            },
+            {
+                category: "EC・製造・物流",
+                question: "越境ECとは何ですか？",
+                options: ["国内でのEC販売", "海外へのEC販売", "実店舗販売", "卸売販売"],
+                correct: 1,
+                explanation: "越境ECは国境を越えた海外へのEC販売を指します。AnyMindのクロスボーダー戦略の重要な要素です。"
+            },
+
+            // 6. 組織・基盤
+            {
+                category: "組織・基盤",
+                question: "HQ（ヘッドクオーター）とは何を指しますか？",
+                options: ["海外支店", "本社", "営業所", "工場"],
+                correct: 1,
+                explanation: "HQは「Headquarters」の略で、本社を指します。AnyMindの場合、東京やシンガポールなどが該当します。"
+            },
+            {
+                category: "組織・基盤",
+                question: "KPI、KGI、KSFのうち、最終的な目標を指すのは？",
+                options: ["KPI", "KGI", "KSF", "すべて同じ"],
+                correct: 1,
+                explanation: "KGI（Key Goal Indicator）は最終的な目標を指します。KPIは中間指標、KSFは成功の鍵となる要因です。"
+            },
+            {
+                category: "組織・基盤",
+                question: "Complianceとは何を意味しますか？",
+                options: ["業績評価", "法令遵守", "顧客満足", "市場調査"],
+                correct: 1,
+                explanation: "Complianceは法令遵守を意味します。企業が法律や規制を守り、適切に事業を運営することを指します。"
+            },
+
+            // 7. プロダクト名
+            {
+                category: "プロダクト",
+                question: "AnyTagはどのような施策に使われるプロダクトですか？",
+                options: ["EC一元管理", "インフルエンサー施策", "物流管理", "生産管理"],
+                correct: 1,
+                explanation: "AnyTagはインフルエンサー施策に使われるプロダクトです。インフルエンサーマーケティングを効率化・最適化します。"
+            },
+            {
+                category: "プロダクト",
+                question: "AnyXはどのような機能を持つプロダクトですか？",
+                options: ["デジタル広告運用", "EC一元管理", "クリエイター支援", "メディア収益化"],
+                correct: 1,
+                explanation: "AnyXはEC一元管理プロダクトです。複数のECモールやプラットフォームを一元的に管理できます。"
+            },
+            {
+                category: "プロダクト",
+                question: "AnyFactoryの主な機能は何ですか？",
+                options: ["広告運用", "生産管理", "配送管理", "SNS分析"],
+                correct: 1,
+                explanation: "AnyFactoryは生産管理プロダクトです。製造プロセスを効率化し、品質管理を支援します。"
+            },
+            {
+                category: "プロダクト",
+                question: "AnyLogiはどのような業務を管理しますか？",
+                options: ["マーケティング", "人事管理", "物流管理", "財務管理"],
+                correct: 2,
+                explanation: "AnyLogiは物流管理プロダクトです。在庫管理から配送までのロジスティクス全体を最適化します。"
+            },
+            {
+                category: "プロダクト",
+                question: "AnyChatはどのような用途のプロダクトですか？",
+                options: ["広告配信", "CRM・接客（LINEなど）", "データ分析", "在庫管理"],
+                correct: 1,
+                explanation: "AnyChatはCRM・接客プロダクトです。LINEなどを通じて顧客とのコミュニケーションを管理します。"
+            },
+            {
+                category: "プロダクト",
+                question: "AnyManagerの主な用途は何ですか？",
+                options: ["人事管理", "メディア・アプリ収益化", "製造管理", "物流管理"],
+                correct: 1,
+                explanation: "AnyManagerはメディア・アプリの収益化プロダクトです。広告収益の最大化を支援します。"
+            },
+
+            // 8. ビジネスモデル
+            {
+                category: "ビジネスモデル",
+                question: "レベニューシェアモデルの特徴は何ですか？",
+                options: ["月額固定料金", "パートナーの売上の一部を分け前としていただく", "広告費の一定割合を手数料とする", "取引ごとに手数料が発生"],
+                correct: 1,
+                explanation: "レベニューシェアモデルは、パートナーと一緒に売上を作り、その一部を分け前としていただくモデルです。AnyManager、AnyTag、D2C事業などが該当します。"
+            },
+            {
+                category: "ビジネスモデル",
+                question: "SaaSモデルの主な収益源は何ですか？",
+                options: ["取引手数料", "Monthly Fee（月額利用料）", "広告費", "製造マージン"],
+                correct: 1,
+                explanation: "SaaSモデルの主な収益源はMonthly Fee（月額利用料）です。AnyX、AnyChat、AnyLogiなどが該当し、安定した収益を生み出します。"
+            },
+            {
+                category: "ビジネスモデル",
+                question: "エージェンシーモデルの収益源は何ですか？",
+                options: ["月額利用料", "Agency Fee（代理店手数料）", "製造マージン", "配送料"],
+                correct: 1,
+                explanation: "エージェンシーモデルの収益源はAgency Fee（代理店手数料）です。広告主の予算を預かり、運用代行することで手数料を得ます。AnyDigital、AnyTagのキャスティングなどが該当します。"
+            },
+            {
+                category: "ビジネスモデル",
+                question: "トランザクションモデルが該当するプロダクトは？",
+                options: ["AnyDigital", "AnyChat", "AnyFactory / AnyLogi", "AnyCreator"],
+                correct: 2,
+                explanation: "トランザクションモデルはAnyFactoryやAnyLogiが該当します。製造や配送などアクションごとに収益が発生します。"
+            },
+            {
+                category: "ビジネスモデル",
+                question: "レベニューシェアモデルのメリットは何ですか？",
+                options: ["初期投資が不要", "パートナーと運命共同体になり深いコンサルが可能", "固定収益が安定", "在庫リスクがない"],
+                correct: 1,
+                explanation: "レベニューシェアモデルのメリットは、パートナーと運命共同体になれるため、深いコンサルティングが可能になることです。パートナーの成功が自社の成功に直結します。"
+            },
+            {
+                category: "ビジネスモデル",
+                question: "SaaSモデルで重視される指標は？",
+                options: ["GMV", "ARR/MRR", "ROAS", "CTR"],
+                correct: 1,
+                explanation: "SaaSモデルではARR（年間経常収益）/MRR（月間経常収益）が重視されます。売上が安定し、積み上がっていく特性を測る指標です。"
+            },
+        ];
+
+        // アプリケーションの状態管理
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+        let selectedAnswer = null;
+
+        // Fisher-Yatesアルゴリズムで配列をシャッフル
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // テスト開始
+        function startTest() {
+            // 問題をシャッフル
+            currentQuestions = shuffleArray(questionDatabase);
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = [];
+            selectedAnswer = null;
+
+            // 問題数を表示
+            document.getElementById('total-questions').textContent = currentQuestions.length;
+            document.getElementById('total-question-num').textContent = currentQuestions.length;
+
+            // 画面切り替え
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+
+            // 最初の問題を表示
+            displayQuestion();
+        }
+
+        // 問題を表示
+        function displayQuestion() {
+            const question = currentQuestions[currentQuestionIndex];
+
+            // プログレスバー更新
+            const progress = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('current-question-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('score-display').textContent = `正解数: ${score}`;
+
+            // カテゴリバッジ
+            document.getElementById('category-badge').textContent = question.category;
+
+            // 問題文
+            document.getElementById('question-text').textContent = question.question;
+
+            // 選択肢をシャッフル
+            const shuffledOptions = question.options.map((option, index) => ({
+                text: option,
+                originalIndex: index
+            }));
+            const shuffledOptionsArray = shuffleArray(shuffledOptions);
+
+            // 選択肢を表示
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            shuffledOptionsArray.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-button w-full text-left p-4 border-2 border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all';
+                button.innerHTML = `
+                    <span class="font-bold text-indigo-600 mr-3">${String.fromCharCode(65 + index)}.</span>
+                    <span class="text-gray-800">${option.text}</span>
+                `;
+                button.onclick = () => selectAnswer(option.originalIndex, button, question.correct);
+                optionsContainer.appendChild(button);
+            });
+
+            // 解説エリアを非表示
+            document.getElementById('explanation-area').classList.add('hidden');
+            document.getElementById('next-button').classList.add('hidden');
+        }
+
+        // 回答選択
+        function selectAnswer(selectedIndex, buttonElement, correctIndex) {
+            if (selectedAnswer !== null) return; // 既に選択済みの場合は何もしない
+
+            selectedAnswer = selectedIndex;
+            const isCorrect = selectedIndex === correctIndex;
+
+            // 全ての選択肢ボタンを取得
+            const allButtons = document.querySelectorAll('.option-button');
+
+            // 全てのボタンを無効化
+            allButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:border-indigo-500', 'hover:bg-indigo-50');
+            });
+
+            // 選択したボタンの色を変更
+            if (isCorrect) {
+                buttonElement.classList.add('correct');
+                score++;
+            } else {
+                buttonElement.classList.add('incorrect');
+
+                // 正解のボタンを緑色に
+                allButtons.forEach((btn, index) => {
+                    const optionText = btn.querySelector('span:last-child').textContent;
+                    if (optionText === currentQuestions[currentQuestionIndex].options[correctIndex]) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // 解答を記録
+            userAnswers.push({
+                question: currentQuestions[currentQuestionIndex],
+                selectedAnswer: selectedIndex,
+                isCorrect: isCorrect
+            });
+
+            // 解説を表示
+            document.getElementById('explanation-text').textContent = currentQuestions[currentQuestionIndex].explanation;
+            document.getElementById('explanation-area').classList.remove('hidden');
+
+            // 次へボタンを表示
+            document.getElementById('next-button').classList.remove('hidden');
+
+            // スコア更新
+            document.getElementById('score-display').textContent = `正解数: ${score}`;
+        }
+
+        // 次の問題へ
+        function nextQuestion() {
+            selectedAnswer = null;
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < currentQuestions.length) {
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // 結果表示
+        function showResults() {
+            const totalQuestions = currentQuestions.length;
+            const percentage = Math.round((score / totalQuestions) * 100);
+
+            // 画面切り替え
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            // スコア表示
+            document.getElementById('final-score').textContent = percentage + '%';
+            document.getElementById('correct-count').textContent = score;
+            document.getElementById('total-count').textContent = totalQuestions;
+
+            // 評価メッセージ
+            const evaluationDiv = document.getElementById('evaluation-message');
+            let message = '';
+            let bgColor = '';
+
+            if (percentage >= 90) {
+                message = '🏆 素晴らしい！AnyMindのビジネスを深く理解していますね！';
+                bgColor = 'bg-green-100 text-green-800';
+            } else if (percentage >= 70) {
+                message = '👍 Good Job! かなり理解が進んでいます。';
+                bgColor = 'bg-blue-100 text-blue-800';
+            } else if (percentage >= 50) {
+                message = '📚 もう少し！復習リストを確認して理解を深めましょう。';
+                bgColor = 'bg-yellow-100 text-yellow-800';
+            } else {
+                message = '💪 頑張りましょう！復習してもう一度チャレンジしてみてください。';
+                bgColor = 'bg-orange-100 text-orange-800';
+            }
+
+            evaluationDiv.className = `text-center p-6 rounded-lg text-xl font-bold ${bgColor}`;
+            evaluationDiv.textContent = message;
+
+            // 間違えた問題の復習リスト
+            const reviewList = document.getElementById('review-list');
+            const incorrectAnswers = userAnswers.filter(answer => !answer.isCorrect);
+
+            if (incorrectAnswers.length === 0) {
+                reviewList.innerHTML = '<div class="text-center text-green-600 font-bold text-lg p-8">🎉 全問正解です！完璧です！</div>';
+            } else {
+                reviewList.innerHTML = incorrectAnswers.map((answer, index) => `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                        <div class="font-bold text-gray-800 mb-2">
+                            <span class="text-red-600">❌ 問題 ${index + 1}</span>
+                            <span class="text-sm bg-red-100 text-red-800 px-2 py-1 rounded ml-2">${answer.question.category}</span>
+                        </div>
+                        <div class="text-gray-700 mb-2">
+                            <strong>Q:</strong> ${answer.question.question}
+                        </div>
+                        <div class="text-gray-600 mb-1">
+                            <strong class="text-red-600">あなたの回答:</strong> ${answer.question.options[answer.selectedAnswer]}
+                        </div>
+                        <div class="text-gray-600 mb-2">
+                            <strong class="text-green-600">正解:</strong> ${answer.question.options[answer.question.correct]}
+                        </div>
+                        <div class="bg-white p-3 rounded mt-2">
+                            <strong class="text-blue-600">💡 解説:</strong>
+                            <p class="text-gray-700 mt-1">${answer.question.explanation}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // リトライ
+        function retryTest() {
+            startTest();
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+        }
+
+        // ページ読み込み時に問題数を表示
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('total-questions').textContent = questionDatabase.length;
+        });
+    </script>
+</body>
+</html>
